@@ -1,6 +1,7 @@
 """Cérebro: cada mensagem vira uma conversa com o Claude Code rodando dentro do vault do Obsidian."""
 import asyncio
 import logging
+import re
 
 from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
 
@@ -16,11 +17,18 @@ ALLOWED_TOOLS = ["Read", "Write", "Edit", "Glob", "Grep", "Bash", "WebSearch", "
 
 CHANNEL_HINTS = {
     "whatsapp": "Resposta vai por WhatsApp: seja direto, pode usar emojis com moderação.",
-    "voice": "Resposta será FALADA numa ligação: frases curtas, sem markdown, sem listas, sem emojis.",
+    "voice": "Resposta será FALADA numa ligação: frases curtas, sem markdown, sem listas, sem emojis. "
+    "Se o dono se despedir ou encerrar a conversa, termine a resposta com [FIM].",
     "heartbeat": "Ninguém está falando com você. Este é seu ciclo autônomo.",
 }
 
 _locks: dict[str, asyncio.Lock] = {}
+
+
+def speakable(text: str) -> str:
+    """Remove emojis e marcação que a voz leria em voz alta."""
+    text = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", "", text)
+    return re.sub(r"[*_#`>]", "", text).strip()
 
 
 async def ask(prompt: str, channel: str, session: str = "conversa") -> str:

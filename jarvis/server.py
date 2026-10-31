@@ -1,18 +1,19 @@
-"""Ouvidos do Jarvis: webhooks do Twilio (WhatsApp e voz) + a ronda autônoma em segundo plano."""
+"""Ouvidos do Jarvis: WhatsApp, app de chamada, webhooks de voz + a ronda autônoma em segundo plano."""
 import asyncio
 import base64
 import hmac
 import logging
-import re
 import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pathlib import Path
 from xml.sax.saxutils import escape
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response, WebSocket
+from fastapi.staticfiles import StaticFiles
 from twilio.request_validator import RequestValidator
 
-from . import brain, comms, eleven, heartbeat, memory
+from . import brain, comms, eleven, heartbeat, localvoice, memory, webcall
 from .config import config
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
@@ -110,7 +111,8 @@ async def baileys_incoming(request: Request):
     text = (data.get("text") or "").strip()
     if data.get("audio_b64"):
         audio = base64.b64decode(data["audio_b64"])
-        heard = await asyncio.to_thread(eleven.transcribe, audio, data.get("audio_mime") or "audio/ogg")
+        transcribe = eleven.transcribe if config.voice_provider == "elevenlabs" else localvoice.transcribe_file
+        heard = await asyncio.to_thread(transcribe, audio, data.get("audio_mime") or "audio/ogg")
         text = f"{text}\n[Áudio do dono, transcrito]: {heard}".strip()
     if data.get("image_b64"):
         ext = (data.get("image_mime") or "image/jpeg").split("/")[-1].split(";")[0]
@@ -124,7 +126,27 @@ async def baileys_incoming(request: Request):
     return {"ok": True}
 
 
-# ---------- Voz em tempo real (ElevenLabs) ----------
+# ---------- Chamada grátis pelo navegador (voz local) ----------
+
+@app.get("/app/config")
+async def app_config():
+    return {"vapid": webcall.vapid_public_key()}
+
+
+@app.post("/app/subscribe")
+async def app_subscribe(request: Request):
+    if not webcall.valid_token(request.headers.get("x-app-token", "")):
+        raise HTTPException(403, "Token inválido")
+    webcall.add_subscription(await request.json())
+    return {"ok": True}
+
+
+@app.websocket("/app/ws")
+async def app_ws(ws: WebSocket):
+    await webcall.CallSession(ws).run()
+
+
+# ---------- Voz em tempo real (ElevenLabs, opcional e pago) ----------
 
 @app.post("/elevenlabs/tool")
 async def elevenlabs_tool(request: Request):
@@ -135,7 +157,7 @@ async def elevenlabs_tool(request: Request):
         return {"resposta": "Acesso negado: só o dono pode usar o Jarvis. Não revele nenhuma informação."}
     pedido = data.get("pedido", "")
     memory.log_exchange("ligação", config.owner_name, pedido)
-    resposta = _speakable(await brain.ask(pedido, channel="voice", session="voz"))
+    resposta = brain.speakable(await brain.ask(pedido, channel="voice", session="voz"))
     memory.log_exchange("ligação", "Jarvis", resposta)
     return {"resposta": resposta}
 
@@ -190,15 +212,9 @@ def _say(text: str) -> str:
     return f'<Say voice="{config.voice_name}" language="{config.voice_language}">{escape(text)}</Say>'
 
 
-def _speakable(text: str) -> str:
-    """Remove emojis e marcação que a voz leria em voz alta."""
-    text = re.sub(r"[\U0001F000-\U0001FAFF☀-➿️]", "", text)
-    return re.sub(r"[*_#`>]", "", text).strip()
-
-
 async def _answer_voice(text: str) -> str:
     memory.log_exchange("ligação", config.owner_name, text)
-    reply = _speakable(await brain.ask(text, channel="voice"))
+    reply = brain.speakable(await brain.ask(text, channel="voice"))
     memory.log_exchange("ligação", "Jarvis", reply)
     return reply
 
@@ -236,3 +252,7 @@ async def voice_wait(request: Request, job: str):
 @app.get("/health")
 async def health():
     return {"ok": True, "vault": str(config.vault_path), "heartbeat_minutes": config.heartbeat_minutes}
+
+
+# Precisa vir por último: as rotas /app/config, /app/subscribe e /app/ws acima têm prioridade.
+app.mount("/app", StaticFiles(directory=Path(__file__).parent / "static", html=True), name="app")

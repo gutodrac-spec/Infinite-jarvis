@@ -1,67 +1,64 @@
 # Infinite Jarvis
 
-Assistente pessoal que **fala com você por WhatsApp e por ligação com voz em tempo real**, pensa com
-o **Claude Code** e guarda a memória no **Obsidian**. Ele tem **iniciativa própria**: a cada X minutos
-acorda sozinho, olha o computador, os lembretes e a rotina, e decide se precisa te mandar mensagem ou te ligar.
+Assistente pessoal **100% grátis** que fala com você pelo **WhatsApp** e por **chamada de voz em tempo
+real**. Ele pensa com o **Claude Code** e guarda a memória no **Obsidian**. Também tem **iniciativa
+própria**: a cada X minutos acorda sozinho, olha o computador, os lembretes e a rotina, e decide se
+precisa te mandar mensagem ou te ligar.
 
 ```
-                 ┌── WhatsApp (Baileys: QR code, sem API oficial) ──┐
- Você ───────────┤                                                  ├──► servidor Jarvis (FastAPI)
-                 └── Ligação ─► Twilio ─► ElevenLabs Agent (voz     │          │
-                                          em tempo real) ── tool ───┘          ▼
-                                                              Claude Code dentro do vault
-                                                              ├─ notas  → memória (Obsidian)
-                                                              ├─ Bash   → olha o computador
-                                                              └─ send_whatsapp / call_owner
-                                       Ronda autônoma a cada 15 min ┘  ← iniciativa própria
+                ┌── WhatsApp (Baileys: QR code, grátis) ─────────────────┐
+ Você ──────────┤                                                        ├─► servidor Jarvis
+ (celular)      └── App de chamada (navegador/PWA) ⇄ WebSocket ⇄ Whisper ┘        │
+                         ▲ notificação push "📞 Jarvis ligando"   + Piper          ▼
+                         │                                       (voz local) Claude Code no vault
+                         └──────────── ronda autônoma a cada 15 min ◄──── ├─ notas → memória (Obsidian)
+                                                                          ├─ Bash  → olha o computador
+                                                                          └─ send_whatsapp / call_owner
 ```
 
-## O que ele faz
+## Ligação grátis, sem número de telefone
 
-| Você                                   | Jarvis                                                                      |
-|----------------------------------------|-----------------------------------------------------------------------------|
-| Manda WhatsApp (texto, áudio ou foto)  | Transcreve o áudio (ElevenLabs Scribe), vê a foto e responde no WhatsApp    |
-| Liga para o número do Jarvis           | Conversa por voz em tempo real (ElevenLabs) e consulta o Claude quando precisa |
-| "Me liga amanhã às 9h pra lembrar X"   | Anota em `Jarvis/Lembretes.md` e **te liga sozinho** na hora                |
-| Nada                                   | Faz a ronda: disco cheio, bateria baixa, lembretes vencidos e rotina        |
+Não existe número de telefone de verdade grátis com API de voz: Twilio e similares cobram pelo número
+e pelo minuto. Por isso o Jarvis tem o **próprio app de chamada**:
 
-**Como funciona a voz em tempo real:** quem fala com você é um agente da ElevenLabs com um modelo
-rápido (`claude-haiku-4-5` por padrão). Por isso não há atraso para ouvir e responder. Quando precisa
-de memória, lembretes ou do computador, ele chama a ferramenta `jarvis`, que é o Claude Code no seu
-vault, e enquanto isso diz algo como "deixa eu ver". Ao fim da ligação, a transcrição vai para o
-diário e o Claude guarda na memória o que for importante.
+- Ele roda no navegador do celular e dá para **instalar na tela inicial** (Android/Chrome ou
+  iPhone com iOS 16.4+, pelo menu Compartilhar → Adicionar à Tela de Início).
+- **Quando o Jarvis quer te ligar**, chega uma **notificação push** "📞 Jarvis ligando" com
+  vibração, e também um WhatsApp com o link. Você toca, depois toca em **ATENDER**, e conversa.
+- **Quando você quer falar com ele**, abra o app e toque em **LIGAR**.
+- A voz é **local e leve**: o [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
+  (modelo `base`, cerca de 150 MB) ouve e o [Piper](https://github.com/OHF-Voice/piper1-gpl) (voz
+  `pt_BR-faber-medium`, cerca de 60 MB) fala, tudo na CPU, sem pagar nada. Você pode interromper o
+  Jarvis falando por cima.
+
+O tempo de resposta é o tempo que o Claude leva para pensar, normalmente alguns segundos. Enquanto
+isso o Jarvis diz "Hum, deixa eu ver".
 
 ## Rodando no GitHub Codespaces
 
-1. **Cadastre os secrets** em github.com → Settings → Codespaces → Secrets e libere-os para este
-   repositório: `ANTHROPIC_API_KEY`, `OWNER_PHONE`, `OWNER_NAME`, `ELEVENLABS_API_KEY`,
-   `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` e `TWILIO_PHONE_NUMBER`. O Codespace também pede esses
-   valores na criação.
-2. **Crie o Codespace:** botão verde *Code* → *Codespaces* → *Create codespace on main*. Ele instala
-   tudo (Python, Node, Claude Code, Baileys) e já **sobe o Jarvis sozinho** em segundo plano.
-3. **Conecte o WhatsApp:** no terminal, rode `tail -f logs/whatsapp.log` e escaneie o QR code em
-   WhatsApp → Aparelhos conectados → Conectar aparelho. Se o QR ficar ruim no terminal, defina
-   `BAILEYS_PAIRING_NUMBER` e use o código de pareamento.
-4. **Ligue a voz:** rode `python -m jarvis setup-elevenlabs`. Esse comando cria o agente e a
-   ferramenta e importa o seu número Twilio na ElevenLabs. Pode rodar de novo quando quiser (ele
-   atualiza em vez de duplicar).
-5. **Teste:** mande um "oi" no WhatsApp e rode `python -m jarvis ligar "Jarvis online, chefe."`.
+1. Cadastre os secrets em github.com → Settings → Codespaces → Secrets: `ANTHROPIC_API_KEY` (ou
+   rode `claude login` depois), `OWNER_PHONE` e `OWNER_NAME`.
+2. Crie o Codespace: botão verde *Code* → *Codespaces* → *Create codespace*. Ele instala tudo
+   (Python, Node, Claude Code, Baileys e os modelos de voz) e **sobe o Jarvis sozinho**.
+3. **Conecte o WhatsApp:** rode `tail -f logs/whatsapp.log` e escaneie o QR code em WhatsApp →
+   Aparelhos conectados.
+4. **Instale o app de chamada:** rode `python -m jarvis link --whatsapp`. O link chega no seu
+   WhatsApp. Abra no celular, toque em **🔔 Ativar notificações** e adicione o app à tela inicial.
+   Na primeira visita, o GitHub mostra um aviso sobre a porta do Codespace: toque em *Continue*.
+5. **Teste:** `python -m jarvis ligar "Jarvis online, chefe."`.
 
-Comandos úteis: `bash scripts/start.sh` (reinicia), `bash scripts/start.sh stop` e `tail -f logs/*.log`.
+Comandos úteis: `bash scripts/start.sh` (reinicia), `bash scripts/start.sh stop`, `tail -f logs/*.log`
+e `python -m jarvis modelos` (baixa os modelos de voz de novo).
 
-> **Importante: o Codespace não é um servidor 24h.** Ele desliga depois de um tempo sem uso (padrão de
-> 30 min, máximo de 4 h, ajustável em Settings → Codespaces) e, quando ele para, o Jarvis para junto.
-> O plano gratuito dá cerca de 60 h por mês num Codespace de 2 núcleos. Para religar sozinho existe o
-> workflow `.github/workflows/keep-alive.yml` (veja as instruções no arquivo). Ficar ligado 24h passa
-> da cota gratuita e gera cobrança. Para um Jarvis permanente de verdade, uma VPS barata roda
-> exatamente os mesmos `scripts/setup.sh` e `scripts/start.sh`.
-
-### Webhooks opcionais da ElevenLabs (painel → Agents → Settings)
-
-- **Início de conversa** (entrega a memória ao agente quando *você* liga):
-  `https://SUA-URL/elevenlabs/init`, com o header `X-Jarvis-Secret` igual ao conteúdo de `.jarvis_state/secret`.
-- **Pós-ligação** (transcrição no diário e na memória): `https://SUA-URL/elevenlabs/post-call`.
-  Copie o segredo HMAC para `ELEVENLABS_WEBHOOK_SECRET`.
+> **O Codespace não é um servidor 24h.** Ele desliga depois de um tempo sem uso (padrão de 30 min,
+> máximo de 4 h, ajustável em Settings → Codespaces), e o Jarvis para junto. O plano gratuito dá
+> cerca de 60 h por mês num Codespace de 2 núcleos. O workflow `.github/workflows/keep-alive.yml`
+> religa o Codespace sozinho (veja as instruções no arquivo), mas ficar ligado 24h passa da cota
+> gratuita. Para um Jarvis permanente e grátis, o *Always Free* da Oracle Cloud (VM ARM) roda os
+> mesmos `scripts/setup.sh` e `scripts/start.sh`.
+>
+> Se você recriar o Codespace, a URL muda: rode `python -m jarvis link --whatsapp` e ative as
+> notificações de novo.
 
 ## Memória no Obsidian
 
@@ -69,57 +66,60 @@ Todas as conversas ficam em `vault/Diario/AAAA-MM-DD.md`. O que ele aprende vai 
 `vault/Jarvis/Perfil.md`, `vault/Pessoas/` e `vault/Projetos/`, e as fotos para `vault/Anexos/`. A
 personalidade e as regras ficam em `vault/CLAUDE.md`.
 
-Para ver a memória no seu Obsidian, no PC ou no celular, enquanto o Jarvis roda no Codespace:
-
-- Defina `VAULT_GIT_SYNC=true`: a cada ronda o Jarvis faz commit e push do vault.
-- No Obsidian, abra este repositório como vault e instale o plugin **Obsidian Git** para puxar as mudanças.
-- **Deixe o repositório privado**, porque a sua memória pessoal vai para o GitHub.
+Para ver a memória no Obsidian do PC ou do celular, defina `VAULT_GIT_SYNC=true`: a cada ronda o
+Jarvis faz commit e push do vault. No Obsidian, abra o repositório como vault e use o plugin
+**Obsidian Git**. **Deixe o repositório privado.**
 
 ## Rodando no seu computador ou numa VPS
 
 ```bash
-bash scripts/setup.sh   # instala tudo
+bash scripts/setup.sh   # instala tudo e baixa os modelos de voz
 nano .env               # preencha
-bash scripts/start.sh   # sobe servidor + WhatsApp
-ngrok http 8000         # se não houver URL pública: coloque a URL gerada em PUBLIC_URL e rode o setup-elevenlabs
+bash scripts/start.sh   # sobe servidor + WhatsApp e mostra o link do app
 ```
 
-Teste sem nenhum serviço externo: `python -m jarvis chat` (terminal) e `python -m jarvis ronda`.
+O app de chamada precisa de HTTPS para usar o microfone e as notificações. Fora do Codespaces, use
+`cloudflared tunnel --url http://localhost:8000` (grátis) e coloque a URL em `PUBLIC_URL`.
 
-## Alternativas via Twilio
+Teste sem nada externo: `python -m jarvis chat` (terminal) e `python -m jarvis ronda`.
 
-- `WHATSAPP_PROVIDER=twilio`: WhatsApp pela API oficial da Twilio. Webhook: `https://SUA-URL/whatsapp`.
-- `VOICE_PROVIDER=twilio`: voz simples com `<Say>`, sem ElevenLabs. Webhook do número: `https://SUA-URL/voice`.
-  Rodar o `setup-elevenlabs` aponta o número para a ElevenLabs; para voltar, troque o webhook no painel da Twilio.
+## Opcionais pagos
+
+O código continua aceitando serviços pagos, se um dia você quiser:
+
+- `VOICE_PROVIDER=elevenlabs`: voz da ElevenLabs num número Twilio de verdade. Rode
+  `python -m jarvis setup-elevenlabs`.
+- `VOICE_PROVIDER=twilio`: número Twilio com voz simples (`<Say>`). Webhook: `/voice`.
+- `WHATSAPP_PROVIDER=twilio`: WhatsApp pela API oficial. Webhook: `/whatsapp`.
 
 ## Segurança e limites
 
-- **Só o seu número é atendido.** Isso vale no Baileys, nos webhooks da Twilio (com assinatura
-  validada) e na ferramenta de voz, que confere o número da ligação. Se outra pessoa ligar, o agente
-  conversa, mas não tem acesso a memória nem ao computador.
-- **A comunicação interna é protegida** pelo segredo `JARVIS_SECRET`, compartilhado entre os
-  serviços. O webhook pós-ligação é validado por HMAC.
+- **Só você é atendido.** No WhatsApp, a ponte Baileys só repassa o seu número. O app de chamada
+  exige o token do seu link, que fica guardado no aparelho; quem não tiver o link não entra.
 - **O Claude roda com `permission_mode="dontAsk"`.** Só as ferramentas listadas em `jarvis/brain.py`
   ficam liberadas, e essa lista **inclui `Bash`**. Rode o Jarvis numa máquina de confiança.
 - **O Baileys não é oficial.** O WhatsApp pode banir números que usam automação. Prefira um chip
-  separado para o Jarvis. Usar o seu próprio número também funciona: aí você fala com ele no chat
-  "Você" (mensagens para si mesmo).
-- **Há limites contra spam:** ligações e mensagens por hora (`MAX_CALLS_PER_HOUR` e
-  `MAX_MESSAGES_PER_HOUR`) e horário de silêncio (`QUIET_HOURS_*`). Cada ronda e cada minuto de
-  ligação têm custo de uso.
+  separado para o Jarvis. Com o seu próprio número, você fala com ele no chat "Você".
+- **Há limites contra spam:** ligações e mensagens por hora e horário de silêncio
+  (`MAX_CALLS_PER_HOUR`, `MAX_MESSAGES_PER_HOUR` e `QUIET_HOURS_*`).
+- **Nem tudo é grátis:** o Claude (cérebro) é o único custo. Use a sua assinatura via `claude login`
+  ou uma chave de API.
 
 ## Estrutura
 
 ```
 jarvis/
-  server.py     webhooks: Baileys, ElevenLabs (tool/init/post-call), Twilio + inicia a ronda
+  server.py     rotas: Baileys, app de chamada (WebSocket), webhooks opcionais + inicia a ronda
+  webcall.py    chamada pelo navegador: VAD, interrupção, push "Jarvis ligando"
+  localvoice.py voz local: Whisper (ouvir) e Piper (falar)
   brain.py      ponte para o Claude Code (Agent SDK), sessões persistentes
-  eleven.py     ElevenLabs: setup do agente, ligação de saída, transcrição de áudios
   heartbeat.py  ronda autônoma (iniciativa própria)
   tools.py      ferramentas extras: send_whatsapp, call_owner, system_status
-  comms.py      roteia WhatsApp (Baileys/Twilio) e ligações (ElevenLabs/Twilio) + limites
+  comms.py      roteia WhatsApp e ligações + limites
   monitor.py    CPU, RAM, disco, bateria
   memory.py     diário, resumo de contexto e sync do vault com o GitHub
+  eleven.py     (opcional, pago) ElevenLabs
+  static/       o app de chamada (PWA)
 whatsapp/       ponte Baileys (Node)
 scripts/        setup.sh e start.sh (usados pelo Codespaces)
 .devcontainer/  configuração do Codespaces

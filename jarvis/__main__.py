@@ -3,7 +3,9 @@
     python -m jarvis chat           # conversa pelo terminal, sem Twilio
     python -m jarvis ronda          # roda uma ronda autônoma agora
     python -m jarvis ligar "texto"  # faz o Jarvis te ligar
-    python -m jarvis setup-elevenlabs  # cria/atualiza o agente de voz e importa o número Twilio
+    python -m jarvis link           # mostra (e com --whatsapp manda) o link do app de chamada
+    python -m jarvis modelos        # baixa os modelos de voz locais (Whisper + Piper)
+    python -m jarvis setup-elevenlabs  # opcional/pago: agente de voz ElevenLabs + número Twilio
 """
 import asyncio
 import os
@@ -30,6 +32,17 @@ def main() -> None:
         print(asyncio.run(heartbeat.tick()))
     elif cmd == "ligar":
         print(comms.call_owner(" ".join(sys.argv[2:]) or "Oi, é o Jarvis. Só testando a ligação."))
+    elif cmd == "link":
+        from . import webcall
+
+        link = webcall.app_link()
+        print("App de chamada do Jarvis (abra no celular e adicione à tela inicial):\n" + link)
+        if "--whatsapp" in sys.argv:
+            print(comms.send_whatsapp(f"Seu app de chamada do Jarvis: {link}"))
+    elif cmd == "modelos":
+        from . import localvoice
+
+        localvoice.download_models()
     elif cmd == "setup-elevenlabs":
         from . import eleven
 

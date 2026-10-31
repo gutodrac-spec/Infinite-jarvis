@@ -1,4 +1,4 @@
-"""Boca do Jarvis: WhatsApp e ligações via Twilio, com limite de frequência para não virar spam."""
+"""Boca do Jarvis: WhatsApp e ligações, com limite de frequência para não virar spam."""
 import time
 from collections import deque
 from xml.sax.saxutils import escape
@@ -57,6 +57,10 @@ def say_and_listen_twiml(text: str) -> str:
 def call_owner(message: str) -> str:
     if not _allow(_sent_calls, config.max_calls_per_hour):
         return "Limite de ligações por hora atingido; use WhatsApp."
+    if config.voice_provider == "app":
+        from . import webcall
+
+        return webcall.ring(message)
     if config.voice_provider == "elevenlabs":
         from . import eleven
 

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05080d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Jarvis</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <style>
+    :root { --bg: #05080d; --fg: #e6f4ff; --dim: #7c93a8; --accent: #3cc8ff; --danger: #ff4d5e; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100dvh; background: radial-gradient(circle at 50% 30%, #0c1a2a, var(--bg) 70%);
+           color: var(--fg); font: 16px/1.4 system-ui, -apple-system, sans-serif;
+           display: flex; flex-direction: column; align-items: center; padding: 24px 16px; }
+    h1 { font-weight: 300; letter-spacing: .4em; margin: 8px 0 0; }
+    #status { color: var(--dim); min-height: 1.4em; margin: 4px 0 24px; text-align: center; }
+    #reactor { width: 200px; height: 200px; border-radius: 50%; border: 0; cursor: pointer; color: var(--fg);
+               background: radial-gradient(circle, #bff0ff 0 12%, var(--accent) 13% 30%, #0a2a3d 31% 60%, #071521 61%);
+               box-shadow: 0 0 40px #3cc8ff55; font-size: 15px; letter-spacing: .1em; transition: transform .2s, box-shadow .2s; }
+    #reactor span { display: inline-block; margin-top: 150px; }
+    body.ringing #reactor { animation: ring 1s infinite; }
+    body.incall #reactor { box-shadow: 0 0 calc(40px + var(--level, 0) * 120px) #3cc8ffaa; }
+    body.incall #reactor span { color: var(--danger); }
+    @keyframes ring { 50% { transform: scale(1.08); box-shadow: 0 0 90px #3cc8ffcc; } }
+    #log { width: 100%; max-width: 520px; margin-top: 28px; display: flex; flex-direction: column; gap: 8px; }
+    .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; }
+    .you { align-self: flex-end; background: #16324a; }
+    .jarvis { align-self: flex-start; background: #0e1b28; border: 1px solid #1d3a52; }
+    #push { margin-top: 20px; background: none; color: var(--accent); border: 1px solid var(--accent);
+            border-radius: 999px; padding: 8px 16px; font: inherit; cursor: pointer; }
+    #push[hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <h1>JARVIS</h1>
+  <div id="status">Pronto.</div>
+  <button id="reactor" aria-label="Ligar ou desligar"><span id="label">LIGAR</span></button>
+  <button id="push" hidden>🔔 Ativar notificações de chamada</button>
+  <div id="log"></div>
+  <script src="app.js"></script>
+</body>
+</html>

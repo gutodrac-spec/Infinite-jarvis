@@ -35,9 +35,9 @@ class Config:
     # Segredo compartilhado entre o servidor, a ponte Baileys e os webhooks da ElevenLabs
     secret: str = field(default_factory=lambda: _env("JARVIS_SECRET"))
 
-    # Canais: whatsapp = baileys | twilio ; voz = elevenlabs | twilio
+    # Canais: whatsapp = baileys | twilio ; voz = app (grátis, navegador) | elevenlabs | twilio
     whatsapp_provider: str = field(default_factory=lambda: _env("WHATSAPP_PROVIDER", "baileys"))
-    voice_provider: str = field(default_factory=lambda: _env("VOICE_PROVIDER", "elevenlabs"))
+    voice_provider: str = field(default_factory=lambda: _env("VOICE_PROVIDER", "app"))
     baileys_url: str = field(default_factory=lambda: _env("BAILEYS_URL", "http://127.0.0.1:3001"))
 
     # ElevenLabs (voz em tempo real)

@@ -46,3 +46,4 @@ if [ -n "${CODESPACE_NAME:-}" ]; then
   echo "URL pública: https://${CODESPACE_NAME}-8000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN}"
 fi
 echo "Jarvis rodando em segundo plano. Logs: tail -f logs/*.log"
+python3 -m jarvis link 2>/dev/null || true

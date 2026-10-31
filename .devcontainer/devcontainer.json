@@ -2,23 +2,42 @@
   "name": "Infinite Jarvis",
   "image": "mcr.microsoft.com/devcontainers/python:3.12",
   "features": {
-    "ghcr.io/devcontainers/features/node:1": { "version": "22" },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22"
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  "forwardPorts": [8000],
-  "portsAttributes": { "8000": { "label": "Jarvis", "onAutoForward": "silent" } },
+  "forwardPorts": [
+    8000
+  ],
+  "portsAttributes": {
+    "8000": {
+      "label": "Jarvis",
+      "onAutoForward": "silent"
+    }
+  },
   "postCreateCommand": "bash scripts/setup.sh",
   "postStartCommand": "bash scripts/start.sh",
   "secrets": {
-    "ANTHROPIC_API_KEY": { "description": "Chave da API do Claude (ou rode `claude login` no terminal)" },
-    "OWNER_PHONE": { "description": "Seu celular com DDI, ex.: +5511999999999" },
-    "OWNER_NAME": { "description": "Como o Jarvis te chama" },
-    "ELEVENLABS_API_KEY": { "description": "Chave da ElevenLabs (voz em tempo real e transcrição de áudios)" },
-    "ELEVENLABS_VOICE_ID": { "description": "ID da voz do Jarvis na ElevenLabs (opcional)" },
-    "ELEVENLABS_WEBHOOK_SECRET": { "description": "Segredo do webhook pós-ligação (opcional)" },
-    "TWILIO_ACCOUNT_SID": { "description": "Twilio Account SID (número de telefone)" },
-    "TWILIO_AUTH_TOKEN": { "description": "Twilio Auth Token" },
-    "TWILIO_PHONE_NUMBER": { "description": "Número Twilio com voz, ex.: +15550000000" }
+    "ANTHROPIC_API_KEY": {
+      "description": "Chave da API do Claude (ou rode `claude login` no terminal)"
+    },
+    "OWNER_PHONE": {
+      "description": "Seu WhatsApp com DDI, ex.: +5511999999999"
+    },
+    "OWNER_NAME": {
+      "description": "Como o Jarvis te chama"
+    }
   },
-  "customizations": { "codespaces": { "openFiles": ["README.md"] } }
+  "customizations": {
+    "codespaces": {
+      "openFiles": [
+        "README.md"
+      ]
+    }
+  },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb"
+  }
 }
