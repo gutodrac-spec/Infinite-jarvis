@@ -1,0 +1,6 @@
+.env
+.jarvis_state/
+__pycache__/
+.venv/
+.pytest_cache/
+vault/.obsidian/workspace*.json
