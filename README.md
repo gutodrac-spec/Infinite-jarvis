@@ -36,8 +36,8 @@ isso o Jarvis diz "Hum, deixa eu ver".
 
 ## Rodando no GitHub Codespaces
 
-1. Cadastre os secrets em github.com → Settings → Codespaces → Secrets: `ANTHROPIC_API_KEY` (ou
-   rode `claude login` depois), `OWNER_PHONE` e `OWNER_NAME`.
+1. Cadastre os secrets em github.com → Settings → Codespaces → Secrets: `CLAUDE_CODE_OAUTH_TOKEN`
+   (gerado com `claude setup-token`; ou `ANTHROPIC_API_KEY`), `OWNER_PHONE` e `OWNER_NAME`.
 2. Crie o Codespace: botão verde *Code* → *Codespaces* → *Create codespace*. Ele instala tudo
    (Python, Node, Claude Code, Baileys e os modelos de voz) e **sobe o Jarvis sozinho**.
 3. **Conecte o WhatsApp:** rode `tail -f logs/whatsapp.log` e escaneie o QR code em WhatsApp →

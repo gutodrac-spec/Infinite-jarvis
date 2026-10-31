@@ -19,6 +19,9 @@
   "postCreateCommand": "bash scripts/setup.sh",
   "postStartCommand": "bash scripts/start.sh",
   "secrets": {
+    "CLAUDE_CODE_OAUTH_TOKEN": {
+      "description": "Token de login do Claude (gerado com `claude setup-token`). Ou use ANTHROPIC_API_KEY."
+    },
     "ANTHROPIC_API_KEY": {
       "description": "Chave da API do Claude (ou rode `claude login` no terminal)"
     },
