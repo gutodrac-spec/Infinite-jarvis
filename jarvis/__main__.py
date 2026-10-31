@@ -3,6 +3,7 @@
     python -m jarvis chat           # conversa pelo terminal, sem Twilio
     python -m jarvis ronda          # roda uma ronda autônoma agora
     python -m jarvis ligar "texto"  # faz o Jarvis te ligar
+    python -m jarvis setup-elevenlabs  # cria/atualiza o agente de voz e importa o número Twilio
 """
 import asyncio
 import os
@@ -29,6 +30,14 @@ def main() -> None:
         print(asyncio.run(heartbeat.tick()))
     elif cmd == "ligar":
         print(comms.call_owner(" ".join(sys.argv[2:]) or "Oi, é o Jarvis. Só testando a ligação."))
+    elif cmd == "setup-elevenlabs":
+        from . import eleven
+
+        ids = eleven.setup()
+        print("ElevenLabs pronta:", ids)
+        print("Webhooks opcionais (painel ElevenLabs > Agents > Settings):")
+        print(f"  início de conversa: {eleven.config.public_url}/elevenlabs/init  (header X-Jarvis-Secret)")
+        print(f"  pós-ligação:        {eleven.config.public_url}/elevenlabs/post-call")
     else:
         print(__doc__)
 

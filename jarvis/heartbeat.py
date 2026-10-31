@@ -44,6 +44,8 @@ async def tick() -> str:
     result = await brain.ask(build_prompt(now, snap, monitor.alerts(snap)), channel="heartbeat", session="ronda")
     if result and result != NOTHING:
         memory.log_exchange("ronda", "Jarvis", result)
+    if config.vault_git_sync:
+        await asyncio.to_thread(memory.sync_vault)
     return result
 
 

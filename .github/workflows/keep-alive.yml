@@ -1,0 +1,24 @@
+# Religa o Codespace do Jarvis se ele tiver parado por inatividade.
+# ATENÇÃO: Codespace ligado 24h consome horas da sua cota (ou gera cobrança). Só ativa se você configurar:
+#   Settings > Secrets and variables > Actions
+#     - variável JARVIS_KEEPALIVE = true
+#     - variável CODESPACE_NAME   = nome do codespace (rode `echo $CODESPACE_NAME` nele)
+#     - secret   CODESPACE_TOKEN  = token pessoal (classic) com o escopo "codespace"
+name: Jarvis keep-alive
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+jobs:
+  start-codespace:
+    if: vars.JARVIS_KEEPALIVE == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ligar o Codespace se estiver parado
+        env:
+          GH_TOKEN: ${{ secrets.CODESPACE_TOKEN }}
+          NAME: ${{ vars.CODESPACE_NAME }}
+        run: |
+          state=$(gh api "/user/codespaces/$NAME" --jq .state)
+          echo "Estado atual: $state"
+          if [ "$state" != "Available" ]; then gh api -X POST "/user/codespaces/$NAME/start" --jq .state; fi

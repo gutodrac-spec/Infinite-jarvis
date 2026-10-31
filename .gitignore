@@ -4,3 +4,6 @@ __pycache__/
 .venv/
 .pytest_cache/
 vault/.obsidian/workspace*.json
+logs/
+whatsapp/node_modules/
+whatsapp/auth/
